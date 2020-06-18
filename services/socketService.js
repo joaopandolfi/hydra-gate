@@ -17,36 +17,41 @@ SockerService.Register = (http) =>{
             console.log('[.] A worker appears');
             connecteds[socket.id] = {p: socket}
 
-            socket.emit("ping",{msg:"welcome dude"})
-
-            socket.on('pong',(data)=>{
+            socket.emit('welcome',{msg:"welcome dude"})
+            
+            socket.on("register",(data)=>{
                 if (authController.CheckWorkerToken(data.token)){
                     console.log(`[+] Worker (${data.id}) connected -> ${socket.id}`);
                     workers[data.id] = {s:socket,id:data.id,timestamp: (new Date().getTime())}
                     connecteds[socket.id].w = workers[data.id]
+                    socket.emit("registered",{sid:socket.id})
                 }
                 else 
                     socket.disconnect()
             })
 
 
-            spcket.on('predicted', (data)=>{
+            socket.on('predicted', (data)=>{
                 if(connecteds[socket.id].w != undefined){
-                    let c = callers[callerID]
-                    c.lambda({success:true, m:metadata},data)
+                    let c = callers[data.id]
+                    c.lambda({success:data.success, m:c.metadata},data)
 
                     let timestamp = (new Date().getTime())
-                    console.log[`[+] Predicted: callerID [${data.callerID}] worker [${connecteds[socket.id].w.id}] at [${timestamp}]`]
+                    console.log[`[+] Predicted: callerID [${data.id}] worker [${connecteds[socket.id].w.id}] at [${timestamp}]`]
                 }else
                     socket.disconnect()
             })
 
             socket.on('disconnect', function(){
-                let id = connecteds[socket.id].w.id
+                let id = "anonymus"
+                if (connecteds[socket.id].w != undefined){
+                    id = connecteds[socket.id].w.id
+                    workers[id] = null
+                    delete workers[id]
+                }
                 connecteds[socket.id] = null
-                workers[id] = null
                 delete connecteds[socket.id]
-                delete workers[id]
+                
                 console.log(`[-] Worker (${id}) disconnected -> ${socket.id}`);
             });
         });
@@ -65,7 +70,7 @@ SockerService.SendToWorker = (lambda,metadata, data) =>{
 
     let callerID = uuid.v4()
     callers[callerID] = {lambda,metadata,timestamp}
-    w.s.emit('predict',{data, timestamp})
+    w.s.emit('predict',{id:callerID,data, timestamp})
 
     console.log(`[+] Predicting: callerID [${callerID}] worker [${w.id}] at [${timestamp}]`)
 }

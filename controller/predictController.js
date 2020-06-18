@@ -11,7 +11,7 @@ Predict.Process = (req,res) =>{
         if(!r.success){
             r.m.send(r.success)
         }else
-            r.send(data)
+            r.m.send(data.data)
     },res,body)
 }
 
