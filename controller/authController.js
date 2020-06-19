@@ -5,11 +5,7 @@ const authController = {}
 
 
 authController.CheckValidToken = (req,res,next) =>{
-    // Check if have session
-    if (req.session.username)
-        return next()
-
-        return next()
+    return next()
 }
 
 authController.CheckWorkerToken = token =>{
@@ -21,7 +17,7 @@ authController.Forbidden = (req,res) =>{
 }
 
 authController.NewToken = (req,res) =>{
-    
+    res.send({success:true})
 }
 
 module.exports = authController 

@@ -4,7 +4,6 @@ var Predict = {}
 
 
 Predict.Process = (req,res) =>{
-
     let body = req.body
 
     socketService.SendToWorker((r,data)=>{

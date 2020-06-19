@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html>
-{% include "./components/head.hbs" %}
-
 {% block style %}
 {% endblock %}
 <body>
     <div id="main">
         {% block aside %}
-            {% include "./components/aside.hbs" %}
         {% endblock %}
 	    
     	<main id="page">
-            {% include "./components/header.hbs" %}
             <section id="content">
 					{% block content %}
                     {% endblock %}
