@@ -1,12 +1,5 @@
 
 const Constants = {
-    Lang:{
-        Default:"ptbr",
-        Supporteds:["ptbr"]
-    },
-    Paths:{
-        Upload:'./public/uploads/' 
-    },
     Ports:{
         http:8888,
         https:443

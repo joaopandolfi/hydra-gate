@@ -1,14 +1,14 @@
 const uuid = require('uuid')
 const configs = require('../configurations/pass')
 const authController = require('../controller/authController')
-const SockerService = {}
+const SocketService = {}
 
 var connecteds = {}
 var workers = {}
 
 var callers = {}
 
-SockerService.Register = (http) =>{
+SocketService.Register = (http) =>{
     if(configs.Socket.use){    
         console.log("[+] Socket Started")
         var io = require('socket.io')(http);
@@ -31,7 +31,7 @@ SockerService.Register = (http) =>{
             })
 
 
-            socket.on('predicted', (data)=>{
+            socket.on('received', (data)=>{
                 if(connecteds[socket.id].w != undefined){
                     let c = callers[data.id]
                     c.lambda({success:data.success, m:c.metadata},data)
@@ -58,7 +58,7 @@ SockerService.Register = (http) =>{
     }
 }
 
-SockerService.SendToWorker = (lambda,metadata, data) =>{
+SocketService.SendToWorker = (lambda,metadata, payload) =>{
     let timestamp = (new Date().getTime())
     let ws = Object.keys(workers)
     if(ws.length <= 0){
@@ -66,13 +66,18 @@ SockerService.SendToWorker = (lambda,metadata, data) =>{
         return lambda({success:false,m:metadata},{})
     }
 
+    // TODO: make load balance here
     let w = workers[ws.pop()]
 
     let callerID = uuid.v4()
     callers[callerID] = {lambda,metadata,timestamp}
-    w.s.emit('predict',{id:callerID,data, timestamp})
+    w.s.emit('handle',{id:callerID,data:payload.data, path:payload.url, method:payload.method, timestamp})
 
     console.log(`[+] Predicting: callerID [${callerID}] worker [${w.id}] at [${timestamp}]`)
 }
 
-module.exports = SockerService
+SocketService.ListWorkers= () =>{
+    return Object.keys(workers)
+}
+
+module.exports = SocketService

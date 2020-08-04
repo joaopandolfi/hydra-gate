@@ -1,9 +1,10 @@
 const router = require('express').Router();
-const navigationController = require('../controller/navigationController')
 const authController = require("../controller/authController")
+const predictController = require("../controller/predictController")
 
-
-router.get('/',authController.CheckValidToken, navigationController.Home)
 router.post('/x',(req,res)=>{res.send(req.body)})
+router.get('/x',predictController.ListWorkers)
+
+router.all('/*',authController.CheckValidToken, predictController.Process) 
 
 module.exports = router

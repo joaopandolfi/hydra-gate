@@ -57,7 +57,6 @@ app.use('/public', express.static('public'));
 app.use('*/css', express.static('public/css'))
 app.use('*/img', express.static('public/img'))
 app.use('*/js', express.static('public/js'))
-app.use('/public', express.static('public'))
 
 app.use('/', router);
 
