@@ -1,10 +1,10 @@
 package socket
 
 import (
-	"encoding/json"
 	"net/http"
 	"sync"
 
+	b64 "encoding/base64"
 	"hydra_gate/models"
 	"hydra_gate/services/dispenser"
 	"hydra_gate/web/controllers"
@@ -83,13 +83,13 @@ func (c *controller) response(ch *gosocketio.Channel, data response) string {
 		statusCode = http.StatusInternalServerError
 	}
 
-	b, err := json.Marshal(data.Data)
+	b, err := b64.StdEncoding.DecodeString(data.Data)
 	if err != nil {
 		logger.Error(" Respondig request: ", err.Error())
 		return "error"
 	}
 
-	err = c.dispenser.ResponseRequest(data.ID, statusCode, b)
+	err = c.dispenser.ResponseRequest(data.ID, statusCode, b, data.Header)
 	if err != nil {
 		logger.Error("invalid response: %w", err)
 		return "error"

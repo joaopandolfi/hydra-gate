@@ -30,7 +30,7 @@ func New() controllers.Controller {
 func (c *controller) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uid := uuid.New()
 	room := r.Header.Get("room")
-	logger.Debug("> Received request", r.RequestURI)
+	logger.Debug("> Received request [room]", r.RequestURI, room)
 	err := c.dispService.HandleRequest(room, uid.String(), w, r)
 	if err != nil {
 		middleware.ResponseError(w, err.Error())

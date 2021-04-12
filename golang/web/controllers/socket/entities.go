@@ -1,5 +1,7 @@
 package socket
 
+import "net/http"
+
 type registerPayload struct {
 	Room  string `json:"id"`
 	Token string `json:"token"`
@@ -9,5 +11,6 @@ type registerPayload struct {
 type response struct {
 	ID      string      `json:"id"`
 	Success bool        `json:"success"`
-	Data    interface{} `json:"data"`
+	Data    string      `json:"data"`
+	Header  http.Header `json:"header"`
 }

@@ -11,7 +11,7 @@ import (
 type Service interface {
 	InjectRooms(rooms *map[string]*models.Worker)
 	HandleRequest(room, reqID string, w http.ResponseWriter, r *http.Request) error
-	ResponseRequest(reqID string, statusCode int, b []byte) error
+	ResponseRequest(reqID string, statusCode int, b []byte, header http.Header) error
 }
 
 var requests map[string]*responder
@@ -39,7 +39,7 @@ func (s *service) getRooms() map[string]*models.Worker {
 func (s *service) HandleRequest(room, reqID string, w http.ResponseWriter, r *http.Request) error {
 	sr := s.getRooms()[room]
 	if sr == nil {
-		return xerrors.Errorf("no workers on room: %w", s.getRooms())
+		return xerrors.Errorf("no workers on room")
 	}
 
 	body, err := middleware.GetBody(r)
@@ -71,15 +71,20 @@ func (s *service) HandleRequest(room, reqID string, w http.ResponseWriter, r *ht
 	return nil
 }
 
-func (s *service) ResponseRequest(reqID string, statusCode int, b []byte) error {
+func (s *service) ResponseRequest(reqID string, statusCode int, b []byte, header http.Header) error {
 	req := requests[reqID]
 	if req == nil {
+		req.Ch <- false
 		return xerrors.Errorf("invalid request id")
 	}
 
 	w := req.W
-
+	//Setting Headers
+	for k, v := range header {
+		w.Header().Add(k, v[0])
+	}
 	w.WriteHeader(statusCode)
+
 	w.Write(b)
 
 	req.Ch <- true
