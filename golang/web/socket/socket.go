@@ -57,7 +57,7 @@ func (s *socket) Setup(port, cors, path string) {
 
 	//handle connected
 	s.server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		logger.Debug("[Socket] A wild user appears", c.Id())
+		logger.Debug("[Socket] A worker appears", c.Id())
 
 		// vars := handlers.GetQueryes(c.Request())
 		// token, err := utils.CheckJwtToken(vars.Get("token"))
@@ -68,9 +68,6 @@ func (s *socket) Setup(port, cors, path string) {
 
 		// s.clients[c.Id()] = client{c: c, token: token}
 		c.Emit("welcome", "take your pills and sit")
-
-		c.Emit("welcome2", "take your pills and sit")
-		c.Emit("welcome3", "take your pills and sit")
 	})
 
 	s.Handlers()

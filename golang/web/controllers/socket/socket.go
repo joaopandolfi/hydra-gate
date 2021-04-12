@@ -1,9 +1,12 @@
 package socket
 
 import (
+	"encoding/json"
 	"net/http"
 	"sync"
 
+	"hydra_gate/models"
+	"hydra_gate/services/dispenser"
 	"hydra_gate/web/controllers"
 	"hydra_gate/web/socket"
 
@@ -14,38 +17,36 @@ import (
 )
 
 type controller struct {
-	s       socket.Socket
-	workers map[string]*worker
-	rooms   map[string]*worker
-	mu      sync.RWMutex
+	s         socket.Socket
+	workers   map[string]*models.Worker
+	rooms     map[string]*models.Worker
+	mu        sync.RWMutex
+	dispenser dispenser.Service
 }
-
-var caller map[string]*http.ResponseWriter
 
 // New socket controller
 func New() controllers.SocketController {
+	rooms := map[string]*models.Worker{}
+	disp := dispenser.New()
+	disp.InjectRooms(&rooms)
+
 	return &controller{
-		s:       nil,
-		rooms:   map[string]*worker{},
-		workers: map[string]*worker{},
+		s:         nil,
+		rooms:     rooms,
+		workers:   map[string]*models.Worker{},
+		dispenser: disp,
 	}
 }
 
 func (c *controller) test(ch *gosocketio.Channel, msg interface{}) string {
-	logger.Debug("[SOCKET][TEST] - handle socket event")
+	logger.Debug("[SOCKET][TEST] - handle socket event", msg)
 	//ch.Emit()
 	return ""
 }
 
-func removeWorker(s []worker, i int) []worker {
-	s[i] = s[len(s)-1]
-	// We do not need to put s[i] at the end, as it will be discarded anyway
-	return s[:len(s)-1]
-}
-
 // Register new user
 func (c *controller) register(ch *gosocketio.Channel, registerPayload registerPayload) string {
-	logger.Debug("Worker [1] is conencted -> [2]", registerPayload.Room, ch.Id())
+	logger.Debug("> Worker [1] is conencted -> [2]", registerPayload.Room, ch.Id())
 
 	w := c.rooms[registerPayload.Room]
 
@@ -56,10 +57,11 @@ func (c *controller) register(ch *gosocketio.Channel, registerPayload registerPa
 		return "closed"
 	}
 
-	newWorker := worker{
+	newWorker := models.Worker{
 		ID:          ch.Id(),
 		Name:        registerPayload.Name,
 		ConenctedAt: format.CurrentDate(),
+		Sokt:        ch,
 	}
 
 	c.rooms[registerPayload.Room] = &newWorker
@@ -74,14 +76,26 @@ func (c *controller) register(ch *gosocketio.Channel, registerPayload registerPa
 	return "ok"
 }
 
-func (c *controller) response(ch *gosocketio.Channel, data map[string]interface{}) string {
-	callerID, ok := data["id"].(string)
-	if !ok {
-		logger.Debug(" >> Caller ID not found on response")
+func (c *controller) response(ch *gosocketio.Channel, data response) string {
+
+	statusCode := 200
+	if !data.Success {
+		statusCode = http.StatusInternalServerError
+	}
+
+	b, err := json.Marshal(data.Data)
+	if err != nil {
+		logger.Error(" Respondig request: ", err.Error())
 		return "error"
 	}
 
-	logger.Debug(" Respond: callerID [1] worker [2]", callerID, ch.Id())
+	err = c.dispenser.ResponseRequest(data.ID, statusCode, b)
+	if err != nil {
+		logger.Error("invalid response: %w", err)
+		return "error"
+	}
+
+	logger.Debug(" Respond: callerID [1] worker [2]", data.ID, ch.Id())
 
 	//caller
 	return "ok"

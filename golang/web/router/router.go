@@ -3,6 +3,7 @@ package router
 import (
 	"hydra_gate/config"
 	"hydra_gate/web/controllers/health"
+	"hydra_gate/web/controllers/lambda"
 	socController "hydra_gate/web/controllers/socket"
 	"hydra_gate/web/server"
 	"hydra_gate/web/socket"
@@ -26,6 +27,8 @@ func (r *Router) Setup() {
 	r.secure()
 
 	health.New().SetupRouter(r.s)
+
+	lambda.New().SetupRouter(r.s)
 
 	//api := r.createSubRouter("/api")
 
