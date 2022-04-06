@@ -11,6 +11,7 @@ type Worker struct {
 	Name        string    `json:"name"`
 	ConenctedAt time.Time `json:"timestamp"`
 	Sokt        *gosocketio.Channel
+	Room        string
 }
 
 func removeWorker(s []Worker, i int) []Worker {

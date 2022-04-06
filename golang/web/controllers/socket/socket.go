@@ -51,7 +51,7 @@ func (c *controller) register(ch *gosocketio.Channel, registerPayload registerPa
 	w := c.rooms[registerPayload.Room]
 
 	if w != nil {
-		logger.Error("Disconnecting worker because alrealdy have one in this room")
+		logger.Error("Disconnecting worker because alrealdy have one in this room", w)
 		ch.Emit("error", "Room is full")
 		ch.Close()
 		return "closed"
@@ -62,6 +62,7 @@ func (c *controller) register(ch *gosocketio.Channel, registerPayload registerPa
 		Name:        registerPayload.Name,
 		ConenctedAt: format.CurrentDate(),
 		Sokt:        ch,
+		Room:        registerPayload.Room,
 	}
 
 	c.rooms[registerPayload.Room] = &newWorker
@@ -106,8 +107,9 @@ func (c *controller) disconnect(ch *gosocketio.Channel, m interface{}) string {
 	c.mu.Lock()
 	w := c.workers[ch.Id()]
 	if w != nil {
-		room = w.ID
+		room = w.Room
 		delete(c.rooms, w.ID)
+		delete(c.rooms, room)
 		delete(c.workers, ch.Id())
 	}
 	c.mu.Unlock()
